@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { Suspense } from "react";
 import GameList from '@/app/components/GameList'
 import GameListSkeleton from '@/app/components/GameListSkeleton'
@@ -18,11 +20,12 @@ export default async function Home() {
         <h2>{me.college}</h2>
         <h3>{me.description}</h3>
       </header>
-      <main>
-        <Suspense fallback={<GameListSkeleton />}>
-          <GameList games={games} />
-        </Suspense>
-      </main>
+      
+        <main>
+          <Suspense fallback={<GameListSkeleton />}>
+            <GameList games={games} />
+          </Suspense>
+        </main>
     </div>
   );
 }
