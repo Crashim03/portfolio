@@ -1,0 +1,13 @@
+---
+- name: Deploy portfolio container
+  hosts: all
+  tasks:
+    - name: Deploy container
+      community.docker.docker_container:
+        name: portfolio
+        image: alextelo/portfolio
+        ports:
+          - "3000:3000"
+        env:
+          ITCH_KEY: "{{ ITCH_KEY }}"
+        restart_policy: always

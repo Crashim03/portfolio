@@ -1,0 +1,49 @@
+name: Deploy Portfolio
+
+on:
+    workflow_run:
+        workflows: ['Docker Image CI']
+        types: [completed]
+
+jobs:
+  install-and-deploy:
+    environment: Machines
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y ansible
+          sudo apt install wireguard
+
+      - name: Configure WireGuard
+        run: |
+            echo "${{ secrets.WIREGUARD_CONF }}" | sudo tee /etc/wireguard/wg0.conf > /dev/null
+            sudo chmod 600 /etc/wireguard/wg0.conf
+            sudo wg-quick up wg0
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Add host to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.MACHINE_IP }} >> ~/.ssh/known_hosts
+
+      - name: Create inventory
+        run: |
+          echo "[target]" > inventory.ini
+          echo "${{ secrets.MACHINE_IP }} ansible_user=ci-cd ansible_ssh_private_key_file=~/.ssh/id_rsa" >> inventory.ini
+
+      - name: Run Ansible playbooks
+        run: |
+          ansible-playbook -i inventory.ini -e "ITCH_KEY=${{ secrets.ITCH_KEY }}" deploy/deploy-container.yml
+        
+     
